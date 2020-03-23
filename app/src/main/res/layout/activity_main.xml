@@ -16,14 +16,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="From"/>
+            android:hint="From" />
 
         <Button
             android:id="@+id/swapButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:icon="@drawable/ic_baseline_swap_horiz_30"
-            style="@style/MaterialIconButton"/>
+            style="@style/MaterialIconButton" />
 
         <AutoCompleteTextView
             android:id="@+id/destinationField"
@@ -39,8 +39,17 @@
             app:icon="@drawable/ic_baseline_search_30"
             style="@style/MaterialIconButton" />
     </LinearLayout>
+
     <View
-    android:layout_width="match_parent"
-    android:layout_height="1dp"
-    android:background="@android:color/darker_gray"/>
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+
+    <TableLayout
+        android:id="@+id/trainTable"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:shrinkColumns="*"
+        android:stretchColumns="*" />
 </LinearLayout>
