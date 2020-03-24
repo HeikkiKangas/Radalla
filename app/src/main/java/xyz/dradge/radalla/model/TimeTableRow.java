@@ -12,6 +12,12 @@ public class TimeTableRow {
     private int differenceInMinutes;
     private int commercialTrack;
 
+    public String getUpdatedTime() {
+        if (actualTime != null) return actualTime;
+        else if (liveEstimateTime != null) return liveEstimateTime;
+        return "";
+    }
+
     public String getStationShortCode() {
         return stationShortCode;
     }
