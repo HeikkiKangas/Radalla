@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity" >
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -16,28 +17,39 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="From" />
+            android:hint="From"
+            android:completionThreshold="1"
+            android:dropDownAnchor="@id/originField"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:capitalize="words" />
 
         <Button
             android:id="@+id/swapButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:icon="@drawable/ic_baseline_swap_horiz_30"
-            style="@style/MaterialIconButton" />
+            style="@style/MaterialIconButton"
+            android:onClick="swapDirection" />
 
         <AutoCompleteTextView
             android:id="@+id/destinationField"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="To"/>
+            android:hint="To"
+            android:completionThreshold="1"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:capitalize="words" />
 
         <Button
             android:id="@+id/searchButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:icon="@drawable/ic_baseline_search_30"
-            style="@style/MaterialIconButton" />
+            style="@style/MaterialIconButton"
+            android:onClick="search" />
     </LinearLayout>
 
     <View
@@ -45,11 +57,21 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray" />
 
+    <TextView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="20dp" />
+
+
     <TableLayout
         android:id="@+id/trainTable"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:shrinkColumns="*"
-        android:stretchColumns="*" />
+        android:stretchColumns="*"
+        android:layout_marginHorizontal="10dp"/>
+
 </LinearLayout>

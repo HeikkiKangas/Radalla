@@ -1,6 +1,13 @@
 package xyz.dradge.radalla.model;
 
+import android.content.Context;
+import android.widget.TableRow;
+import android.widget.TextView;
+
+import java.util.HashMap;
 import java.util.List;
+
+import xyz.dradge.radalla.util.TimeUtil;
 
 public class Train {
     private int trainNumber;
@@ -10,6 +17,21 @@ public class Train {
     private List<TimeTableRow> timeTableRows;
     private boolean cancelled;
     private String trainCategory;
+    private TimeTableRow arrivalRow;
+    private TimeTableRow departureRow;
+    private RailwayStation origin;
+    private RailwayStation destination;
+    private HashMap<String, RailwayStation> stations;
+    private boolean passengerTrain;
+
+    public void setStations(RailwayStation origin, RailwayStation destination, HashMap<String, RailwayStation> stations) {
+        this.origin = origin;
+        this.stations = stations;
+        this.destination = destination;
+        if (destination == null) this.destination = getLastStop();
+        arrivalRow = getArrivalTimeTableRow(this.destination);
+        departureRow = getDepartureTimeTableRow(origin);
+    }
 
     public int getTrainNumber() {
         return trainNumber;
@@ -65,6 +87,27 @@ public class Train {
 
     public void setTrainCategory(String trainCategory) {
         this.trainCategory = trainCategory;
+        passengerTrain = trainCategory.equals("Commuter") || trainCategory.equals("Long-distance");
+    }
+
+    public TimeTableRow getArrivalRow() {
+        return arrivalRow;
+    }
+
+    public TimeTableRow getDepartureRow() {
+        return departureRow;
+    }
+
+    public RailwayStation getOrigin() {
+        return origin;
+    }
+
+    public RailwayStation getDestination() {
+        return destination;
+    }
+
+    public boolean isPassengerTrain() {
+        return passengerTrain;
     }
 
     @Override
@@ -74,5 +117,81 @@ public class Train {
                 ", departureDate='" + departureDate + '\'' +
                 ", timeTableRowsCount=" + timeTableRows.size() +
                 '}';
+    }
+
+    public TimeTableRow getDepartureTimeTableRow(RailwayStation station) {
+        for (TimeTableRow r : timeTableRows) {
+            if (station.getStationUICCode() == r.getStationUICCode() && r.getType().equals("DEPARTURE")) return r;
+        }
+        return null;
+    }
+
+    public TimeTableRow getArrivalTimeTableRow(RailwayStation station) {
+        for (TimeTableRow r : timeTableRows) {
+            if (station.getStationUICCode() == r.getStationUICCode() && r.getType().equals("ARRIVAL")) return r;
+        }
+        return null;
+    }
+
+    private String getTimeChangedText(String time1, String time2) {
+        return time1 + " ➜ " + time2;
+    }
+
+    public TableRow getTimetableRow(Context context, boolean route) {
+        TableRow row = new TableRow(context);
+        TextView originDepartureTime = new TextView(context);
+        TextView originTrack = new TextView(context);
+        TextView destinationArrivalTime = new TextView(context);
+        TextView destinationTrack = new TextView(context);
+        TextView trainNumber = new TextView(context);
+
+        row.addView(originTrack);
+        row.addView(originDepartureTime);
+        row.addView(trainNumber);
+        row.addView(destinationTrack);
+        row.addView(destinationArrivalTime);
+
+        trainNumber.setText(trainType + ' ' + getTrainNumber());
+        destinationTrack.setText("" + arrivalRow.getCommercialTrack());
+
+        if (departureRow != null) {
+            originTrack.setText("" + departureRow.getCommercialTrack());
+            if (departureRow.getDifferenceInMinutes() < 1) {
+                originDepartureTime
+                        .setText(TimeUtil.utcToHoursAndMinutes(departureRow.getScheduledTime()));
+            } else {
+                originDepartureTime.setText(getTimeChangedText(
+                            TimeUtil.utcToHoursAndMinutes(departureRow.getScheduledTime()),
+                            TimeUtil.utcToHoursAndMinutes(departureRow.getUpdatedTime())
+                ));
+            }
+        }
+
+        if (arrivalRow != null) {
+            if (arrivalRow.getDifferenceInMinutes() < 1) {
+                destinationArrivalTime.setText(
+                        TimeUtil.utcToHoursAndMinutes(arrivalRow.getScheduledTime()));
+            } else {
+                destinationArrivalTime.setText(getTimeChangedText(
+                        TimeUtil.utcToHoursAndMinutes(arrivalRow.getScheduledTime()),
+                        TimeUtil.utcToHoursAndMinutes(arrivalRow.getUpdatedTime())
+                ));
+            }
+        }
+
+        if (!route) {
+            TextView destinationName = new TextView(context);
+            destinationName.setText(destination.getStationFriendlyName());
+            row.addView(destinationName);
+        }
+        return row;
+    }
+
+    private RailwayStation getLastStop() {
+        for (int i = timeTableRows.size() - 1; i > 0; i--) {
+            TimeTableRow row = timeTableRows.get(i);
+            if (row.isTrainStopping()) return stations.get(row.getStationShortCode());
+        }
+        return null;
     }
 }

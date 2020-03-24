@@ -16,6 +16,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".services.RailwayStationFetchService" />
+        <service android:name=".services.TrainFetchService" />
+        <receiver android:name=".MainActivity$TrainReceiver" >
+            <intent-filter>
+                <action android:name="xyz.dradge.radalla.TrainsFetched" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".MainActivity$RailwayStationReceiver" >
+        <intent-filter>
+            <action android:name="xyz.dradge.radalla.RailwayStationsFetched" />
+        </intent-filter>
+    </receiver>
     </application>
-
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
