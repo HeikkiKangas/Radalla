@@ -1,9 +1,16 @@
 package xyz.dradge.radalla.model;
 
 import android.content.Context;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,6 +36,10 @@ public class Train {
         this.stations = stations;
         this.destination = destination;
         if (destination == null) this.destination = getLastStop();
+        updateArrivalAndDepartureRows();
+    }
+
+    private void updateArrivalAndDepartureRows() {
         arrivalRow = getArrivalTimeTableRow(this.destination);
         departureRow = getDepartureTimeTableRow(origin);
     }
@@ -145,6 +156,7 @@ public class Train {
         TextView destinationTrack = new TextView(context);
         TextView trainNumber = new TextView(context);
 
+
         row.addView(originTrack);
         row.addView(originDepartureTime);
         row.addView(trainNumber);
@@ -184,6 +196,15 @@ public class Train {
             destinationName.setText(destination.getStationFriendlyName());
             row.addView(destinationName);
         }
+        Button trackBtn = new Button(context);
+        trackBtn.setText("Track");
+        trackBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(getClass().getName(), "Track train, topic: " + getMQTTTopic());
+            }
+        });
+        row.addView(trackBtn);
         return row;
     }
 
@@ -193,5 +214,30 @@ public class Train {
             if (row.isTrainStopping()) return stations.get(row.getStationShortCode());
         }
         return null;
+    }
+
+    public Train updateTrain(String json) {
+        ObjectReader objectReader = (new ObjectMapper()).readerForUpdating(this);
+        try {
+            objectReader.readValue(json);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        updateArrivalAndDepartureRows();
+        return this;
+    }
+
+    public String getMQTTTopic() {
+        return String.format(
+                "trains/%s/%d",
+                departureDate,
+                trainNumber);
+    }
+
+    public String getLocationMQTTTopic() {
+        return String.format(
+                "train-locations/%s/%d",
+                departureDate,
+                trainNumber);
     }
 }
