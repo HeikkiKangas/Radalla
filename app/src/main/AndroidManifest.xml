@@ -18,17 +18,18 @@
         </activity>
         <service android:name=".services.RailwayStationFetchService" />
         <service android:name=".services.TrainFetchService" />
-        <service android:name="org.eclipse.paho.android.service.MqttService"/>
+        <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <service android:name=".services.TrainMqttService" />
         <receiver android:name=".MainActivity$TrainReceiver" >
             <intent-filter>
                 <action android:name="xyz.dradge.radalla.TrainsFetched" />
             </intent-filter>
         </receiver>
         <receiver android:name=".MainActivity$RailwayStationReceiver" >
-        <intent-filter>
+            <intent-filter>
             <action android:name="xyz.dradge.radalla.RailwayStationsFetched" />
         </intent-filter>
-    </receiver>
+        </receiver>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- For Paho -->

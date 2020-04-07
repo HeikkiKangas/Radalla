@@ -8,21 +8,24 @@
     android:orientation="vertical"
     tools:context=".MainActivity" >
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <AutoCompleteTextView
+            android:layout_marginLeft="13dp"
             android:id="@+id/originField"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:hint="From"
             android:completionThreshold="1"
             android:dropDownAnchor="@id/originField"
             android:imeOptions="actionSearch"
             android:inputType="text"
-            android:capitalize="words" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/swapButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <Button
             android:id="@+id/swapButton"
@@ -30,18 +33,24 @@
             android:layout_height="wrap_content"
             app:icon="@drawable/ic_baseline_swap_horiz_30"
             style="@style/MaterialIconButton"
-            android:onClick="swapDirection" />
+            app:layout_constraintStart_toEndOf="@id/originField"
+            app:layout_constraintEnd_toStartOf="@id/destinationField"
+            android:onClick="swapDirection"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <AutoCompleteTextView
             android:id="@+id/destinationField"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:hint="To"
             android:completionThreshold="1"
             android:imeOptions="actionSearch"
             android:inputType="text"
-            android:capitalize="words" />
+            app:layout_constraintStart_toEndOf="@id/swapButton"
+            app:layout_constraintEnd_toStartOf="@id/searchButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <Button
             android:id="@+id/searchButton"
@@ -49,8 +58,12 @@
             android:layout_height="wrap_content"
             app:icon="@drawable/ic_baseline_search_30"
             style="@style/MaterialIconButton"
-            android:onClick="search" />
-    </LinearLayout>
+            android:onClick="search"
+            app:layout_constraintStart_toEndOf="@id/destinationField"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <View
         android:layout_width="match_parent"

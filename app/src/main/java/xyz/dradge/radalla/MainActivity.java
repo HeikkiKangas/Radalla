@@ -1,16 +1,21 @@
 package xyz.dradge.radalla;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,14 +30,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import xyz.dradge.radalla.model.RailwayStation;
 import xyz.dradge.radalla.model.Train;
+import xyz.dradge.radalla.services.MqttListener;
+import xyz.dradge.radalla.services.MqttService;
 import xyz.dradge.radalla.services.RailwayStationFetchService;
 import xyz.dradge.radalla.services.TrainFetchService;
+import xyz.dradge.radalla.services.TrainMqttBinder;
+import xyz.dradge.radalla.services.TrainMqttService;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MqttListener {
+    private final String TAG = getClass().getName();
+
     private AutoCompleteTextView originField;
     private AutoCompleteTextView destinationField;
     private TableLayout trainTable;
@@ -45,16 +57,37 @@ public class MainActivity extends AppCompatActivity {
     private List<Train> trains;
     private List<Train> trackedTrains;
 
+    private TrainMqttConnection trainMqttConnection;
+    private MqttService trainMqttService;
+
+    private String id;
+
+    @Override
+    protected void onStart() {
+        Log.d(TAG, "onStart()");
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(trainMqttConnection);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        id = UUID.randomUUID().toString();
+        trainMqttConnection = new TrainMqttConnection();
 
         trackedTrains = new ArrayList<>();
         passengerStationNames = new ArrayList<>();
         stations = new HashMap<>();
         shortCodesToNames = new HashMap<>();
         trains = new ArrayList<>();
+
         autoCompleteAdapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_dropdown_item_1line,
@@ -62,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         );
 
         originField = findViewById(R.id.originField);
+        originField.setAdapter(autoCompleteAdapter);
         originField.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 search(v);
@@ -70,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
         destinationField = findViewById(R.id.destinationField);
+        destinationField.setAdapter(autoCompleteAdapter);
         destinationField.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 search(v);
@@ -77,10 +112,9 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+
         trainTable = findViewById(R.id.trainTable);
         header = findViewById(R.id.header);
-        originField.setAdapter(autoCompleteAdapter);
-        destinationField.setAdapter(autoCompleteAdapter);
 
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -134,13 +168,51 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
+    @Override
+    public void onUpdate(String msg) {
+        try {
+            Log.d(TAG, "onUpdate() starting.");
+            Train updatedTrain = objectMapper.readValue(msg, Train.class);
+            for (Train t : trains) {
+                if (t.getTrainNumber() == updatedTrain.getTrainNumber() &&
+                t.getDepartureDate().equals(updatedTrain.getDepartureDate())) {
+                    t.updateTrain(msg);
+                    trainTable.removeAllViews();
+                    boolean destinationSet = destinationField.getText().toString().length() > 0;
+                    trains.forEach(tr -> trainTable.addView(tr.getTimetableRow(this, destinationSet)));
+                    header.setText(destinationSet
+                            ? originField.getText().toString() + " - Leaving and arriving trains."
+                            : originField.getText().toString() + " - "
+                              + destinationField.getText().toString());
+                    Log.d(TAG, "onUpdate() train updated: " + t.getTrainNumber());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String getListenerId() {
+        return id;
+    }
+
+    public void subscribe(String topic) {
+        if (trainMqttService == null) {
+            Intent i = new Intent(getApplicationContext(), TrainMqttService.class);
+            i.putExtra("id", id);
+            getApplicationContext().bindService(i, trainMqttConnection, Context.BIND_AUTO_CREATE);
+        }
+        if (trainMqttService != null) trainMqttService.subscribe(topic, this);
+    }
+
     public class TrainReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String json = intent.getStringExtra("json");
             RailwayStation origin = findStationByShortCode(intent.getStringExtra("originShortCode"));
             RailwayStation destination = findStationByShortCode(intent.getStringExtra("destinationShortCode"));
-            Log.d(getClass().getName(), "route: " + (destination != null));
+            Log.d(TAG, "route: " + (destination != null));
             if (json.length() < 1) return;
 
             try {
@@ -154,7 +226,16 @@ public class MainActivity extends AppCompatActivity {
                 trains.forEach(t -> t.setStations(origin, destination, stations));
 
                 trainTable.removeAllViews();
-                trains.forEach(t -> trainTable.addView(t.getTimetableRow(context, destination != null)));
+                trains.forEach(t -> {
+                    TableRow row = t.getTimetableRow(context, destination != null);
+                    Button trackBtn = new Button(MainActivity.this);
+                    trackBtn.setOnClickListener(v -> {
+                        subscribe(t.getMQTTTopic());
+                        Log.d(TAG, "Track train, topic: " + t.getMQTTTopic());
+                    });
+                    row.addView(trackBtn);
+                    trainTable.addView(row);
+                });
                 header.setText(destination == null
                         ? origin.getStationFriendlyName() + " - Leaving and arriving trains."
                         : origin.getStationFriendlyName() + " - " + destination.getStationFriendlyName());
@@ -167,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
     public class RailwayStationReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(getClass().getName(), "onReceive() RailwayStations received");
+            Log.d(TAG, "onReceive() RailwayStations received");
             String json = intent.getStringExtra("json");
             if (json.length() < 1) return;
             try {
@@ -189,5 +270,17 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+    }
+
+    class TrainMqttConnection implements ServiceConnection {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "onServiceConnected()");
+            TrainMqttBinder binder = (TrainMqttBinder) service;
+            trainMqttService = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {}
     }
 }

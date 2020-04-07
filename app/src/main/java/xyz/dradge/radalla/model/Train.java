@@ -1,9 +1,6 @@
 package xyz.dradge.radalla.model;
 
 import android.content.Context;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TableRow;
 import android.widget.TextView;
 
@@ -196,15 +193,6 @@ public class Train {
             destinationName.setText(destination.getStationFriendlyName());
             row.addView(destinationName);
         }
-        Button trackBtn = new Button(context);
-        trackBtn.setText("Track");
-        trackBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(getClass().getName(), "Track train, topic: " + getMQTTTopic());
-            }
-        });
-        row.addView(trackBtn);
         return row;
     }
 
@@ -229,7 +217,7 @@ public class Train {
 
     public String getMQTTTopic() {
         return String.format(
-                "trains/%s/%d",
+                "trains/%s/%d/#",
                 departureDate,
                 trainNumber);
     }
