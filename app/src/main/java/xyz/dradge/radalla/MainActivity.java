@@ -43,12 +43,14 @@ public class MainActivity extends AppCompatActivity {
     private ObjectMapper objectMapper;
     private ArrayAdapter<String> autoCompleteAdapter;
     private List<Train> trains;
+    private List<Train> trackedTrains;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        trackedTrains = new ArrayList<>();
         passengerStationNames = new ArrayList<>();
         stations = new HashMap<>();
         shortCodesToNames = new HashMap<>();
