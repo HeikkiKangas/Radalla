@@ -65,6 +65,11 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
     @Override
     protected void onStart() {
         Log.d(TAG, "onStart()");
+        if (trainMqttService == null) {
+            Intent i = new Intent(getApplicationContext(), TrainMqttService.class);
+            i.putExtra("id", id);
+            getApplicationContext().bindService(i, trainMqttConnection, Context.BIND_AUTO_CREATE);
+        }
         super.onStart();
     }
 
@@ -198,11 +203,6 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
     }
 
     public void subscribe(String topic) {
-        if (trainMqttService == null) {
-            Intent i = new Intent(getApplicationContext(), TrainMqttService.class);
-            i.putExtra("id", id);
-            getApplicationContext().bindService(i, trainMqttConnection, Context.BIND_AUTO_CREATE);
-        }
         if (trainMqttService != null) trainMqttService.subscribe(topic, this);
     }
 
@@ -278,6 +278,7 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
             Log.d(TAG, "onServiceConnected()");
             TrainMqttBinder binder = (TrainMqttBinder) service;
             trainMqttService = binder.getService();
+            trainMqttService.setListener(MainActivity.this);
         }
 
         @Override

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
@@ -205,7 +206,9 @@ public class Train {
     }
 
     public Train updateTrain(String json) {
-        ObjectReader objectReader = (new ObjectMapper()).readerForUpdating(this);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectReader objectReader = objectMapper.readerForUpdating(this);
         try {
             objectReader.readValue(json);
         } catch (IOException e) {
