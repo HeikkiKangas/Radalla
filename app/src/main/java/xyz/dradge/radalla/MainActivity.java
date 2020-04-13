@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -21,9 +20,11 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.material.tabs.TabLayout;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
                 android.R.layout.simple_dropdown_item_1line,
                 passengerStationNames
         );
-
+        /*
         originField = findViewById(R.id.originField);
         originField.setAdapter(autoCompleteAdapter);
         originField.setOnEditorActionListener((v, actionId, event) -> {
@@ -117,10 +118,29 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
             }
             return false;
         });
-
         trainTable = findViewById(R.id.trainTable);
         header = findViewById(R.id.header);
+        */
+        TabLayout layout = findViewById(R.id.tabLayout);
+        List<String> tabNames = Arrays.asList("Station", "Route", "Train");
+        ViewPager2 viewPager = findViewById(R.id.viewPager);
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels);
+            }
 
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+            }
+        });
+        //new TabLayoutMediator(layout, findViewById(R.id.viewPager), (tab, position) -> tab.setText(tabNames[position])).attach();
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

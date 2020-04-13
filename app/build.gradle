@@ -41,6 +41,8 @@ dependencies {
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.2'
     implementation 'com.google.android.material:material:1.1.0'
     implementation "androidx.emoji:emoji-bundled:1.0.0"
+    implementation "androidx.viewpager2:viewpager2:1.0.0"
     implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.2'
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.1.0'
 }

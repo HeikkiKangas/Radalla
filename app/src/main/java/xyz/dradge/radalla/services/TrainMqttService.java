@@ -31,8 +31,8 @@ public class TrainMqttService extends Service implements MqttService {
     MqttAndroidClient mqttClient;
     IBinder binder;
     HashMap<String, List<String>> topicsListened;
-    HashMap<String, MqttListener> listeners;
-    MqttListener listener;
+    //HashMap<String, MqttListener> listeners;
+    List<MqttListener> listeners;
 
     @Nullable
     @Override
@@ -42,9 +42,11 @@ public class TrainMqttService extends Service implements MqttService {
         return binder;
     }
 
-    public void setListener(MqttListener listener) {
-        this.listener = listener;
+    public void setListeners(List<MqttListener> listeners) {
+        this.listeners = listeners;
     }
+
+    public void addListener(MqttListener listener) { listeners.add(listener); }
 
     @Override
     public boolean onUnbind(Intent intent) {
@@ -79,6 +81,7 @@ public class TrainMqttService extends Service implements MqttService {
                 @Override
                 public void connectionLost(Throwable cause) {
                     Log.d(getClass().getName(), "Connection lost.");
+                    connect();
                 }
 
                 @Override
