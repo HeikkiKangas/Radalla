@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".NewMainActivity">
 
 
     <AutoCompleteTextView
-        android:id="@+id/stationField"
+        android:id="@+id/stationNameField"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="13dp"
         android:completionThreshold="1"
-        android:dropDownAnchor="@id/originField"
+        android:dropDownAnchor="@id/stationNameField"
         android:hint="Station name"
         android:imeOptions="actionSearch"
         android:inputType="text"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/searchButton"
+        app:layout_constraintRight_toLeftOf="@id/stationSearchButton"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/searchButton"/>
+        app:layout_constraintBottom_toBottomOf="@id/stationSearchButton"/>
 
     <Button
-        android:id="@+id/searchButton"
+        android:id="@+id/stationSearchButton"
         style="@style/MaterialIconButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="search"
         app:icon="@drawable/ic_baseline_search_30"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/stationField"
+        app:layout_constraintLeft_toRightOf="@id/stationNameField"
         app:layout_constraintTop_toTopOf="parent" />
 
     <View
@@ -38,11 +38,10 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"
-        app:layout_constraintTop_toBottomOf="@id/searchButton"/>
+        app:layout_constraintTop_toBottomOf="@id/stationSearchButton"/>
 
     <TextView
-        android:text="Header"
-        android:id="@+id/header"
+        android:id="@+id/stationHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAlignment="center"
@@ -50,9 +49,13 @@
         app:layout_constraintTop_toBottomOf="@id/spacer"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/stationRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/header"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/stationHeader"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_editor_absoluteX="0dp"
+        tools:listitem="@layout/station_view_item" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

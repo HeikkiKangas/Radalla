@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/stationViewItem"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/recycler_item_border">
+
+    <TextView
+        android:id="@+id/stationItemDepartureTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/stationItemTrainName"
+        android:paddingLeft="5dp" />
+
+    <TextView
+        android:id="@+id/stationItemTrainName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/stationItemDepartureTime"
+        app:layout_constraintRight_toLeftOf="@id/stationItemArrivalTime" />
+
+    <TextView
+        android:id="@+id/stationItemArrivalTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/stationItemTrainName"
+        app:layout_constraintRight_toLeftOf="@id/stationItemDestinationName" />
+
+    <TextView
+        android:id="@+id/stationItemDestinationName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textAlignment="textEnd"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/stationItemArrivalTime"
+        app:layout_constraintRight_toRightOf="parent"
+        android:paddingRight="5dp" />
+</androidx.constraintlayout.widget.ConstraintLayout>

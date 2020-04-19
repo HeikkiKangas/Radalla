@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import xyz.dradge.radalla.util.TimeUtil;
 
@@ -22,14 +23,15 @@ public class Train {
     private List<TimeTableRow> timeTableRows;
     private boolean cancelled;
     private String trainCategory;
+    private String commuterLineID;
+    private boolean passengerTrain;
     private TimeTableRow arrivalRow;
     private TimeTableRow departureRow;
     private RailwayStation origin;
     private RailwayStation destination;
-    private HashMap<String, RailwayStation> stations;
-    private boolean passengerTrain;
+    private Map<String, RailwayStation> stations;
 
-    public void setStations(RailwayStation origin, RailwayStation destination, HashMap<String, RailwayStation> stations) {
+    public void setStations(RailwayStation origin, RailwayStation destination, Map<String, RailwayStation> stations) {
         this.origin = origin;
         this.stations = stations;
         this.destination = destination;
@@ -124,7 +126,7 @@ public class Train {
         return "Train{" +
                 "trainNumber=" + trainNumber +
                 ", departureDate='" + departureDate + '\'' +
-                ", timeTableRowsCount=" + timeTableRows.size() +
+                ", timeTableRowsCount=" + timeTableRows +
                 '}';
     }
 
@@ -146,55 +148,12 @@ public class Train {
         return time1 + " ➜ " + time2;
     }
 
-    public TableRow getTimetableRow(Context context, boolean route) {
-        TableRow row = new TableRow(context);
-        TextView originDepartureTime = new TextView(context);
-        TextView originTrack = new TextView(context);
-        TextView destinationArrivalTime = new TextView(context);
-        TextView destinationTrack = new TextView(context);
-        TextView trainNumber = new TextView(context);
+    public String getCommuterLineID() {
+        return commuterLineID;
+    }
 
-
-        row.addView(originTrack);
-        row.addView(originDepartureTime);
-        row.addView(trainNumber);
-        row.addView(destinationTrack);
-        row.addView(destinationArrivalTime);
-
-        trainNumber.setText(trainType + ' ' + getTrainNumber());
-        destinationTrack.setText("" + arrivalRow.getCommercialTrack());
-
-        if (departureRow != null) {
-            originTrack.setText("" + departureRow.getCommercialTrack());
-            if (departureRow.getDifferenceInMinutes() < 1) {
-                originDepartureTime
-                        .setText(TimeUtil.utcToHoursAndMinutes(departureRow.getScheduledTime()));
-            } else {
-                originDepartureTime.setText(getTimeChangedText(
-                            TimeUtil.utcToHoursAndMinutes(departureRow.getScheduledTime()),
-                            TimeUtil.utcToHoursAndMinutes(departureRow.getUpdatedTime())
-                ));
-            }
-        }
-
-        if (arrivalRow != null) {
-            if (arrivalRow.getDifferenceInMinutes() < 1) {
-                destinationArrivalTime.setText(
-                        TimeUtil.utcToHoursAndMinutes(arrivalRow.getScheduledTime()));
-            } else {
-                destinationArrivalTime.setText(getTimeChangedText(
-                        TimeUtil.utcToHoursAndMinutes(arrivalRow.getScheduledTime()),
-                        TimeUtil.utcToHoursAndMinutes(arrivalRow.getUpdatedTime())
-                ));
-            }
-        }
-
-        if (!route) {
-            TextView destinationName = new TextView(context);
-            destinationName.setText(destination.getStationFriendlyName());
-            row.addView(destinationName);
-        }
-        return row;
+    public void setCommuterLineID(String commuterLineID) {
+        this.commuterLineID = commuterLineID;
     }
 
     private RailwayStation getLastStop() {

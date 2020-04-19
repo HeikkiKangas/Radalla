@@ -40,8 +40,7 @@ import xyz.dradge.radalla.services.MqttListener;
 import xyz.dradge.radalla.services.MqttService;
 import xyz.dradge.radalla.services.RailwayStationFetchService;
 import xyz.dradge.radalla.services.TrainFetchService;
-import xyz.dradge.radalla.services.TrainMqttBinder;
-import xyz.dradge.radalla.services.TrainMqttService;
+import xyz.dradge.radalla.services.MqttBinder;
 
 public class MainActivity extends AppCompatActivity implements MqttListener {
     private final String TAG = getClass().getName();
@@ -67,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
     protected void onStart() {
         Log.d(TAG, "onStart()");
         if (trainMqttService == null) {
-            Intent i = new Intent(getApplicationContext(), TrainMqttService.class);
+            Intent i = new Intent(getApplicationContext(), MqttService.class);
             i.putExtra("id", id);
             getApplicationContext().bindService(i, trainMqttConnection, Context.BIND_AUTO_CREATE);
         }
@@ -164,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
         String temp = originField.getText().toString();
         originField.setText(destinationField.getText());
         destinationField.setText(temp);
+        destinationField.clearFocus();
         if (!originField.getText().toString().isEmpty()) search(v);
     }
 
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
     }
 
     @Override
-    public void onUpdate(String msg) {
+    public void onUpdate(String topic, String msg) {
         try {
             Log.d(TAG, "onUpdate() starting.");
             Train updatedTrain = objectMapper.readValue(msg, Train.class);
@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
                     t.updateTrain(msg);
                     trainTable.removeAllViews();
                     boolean destinationSet = destinationField.getText().toString().length() > 0;
-                    trains.forEach(tr -> trainTable.addView(tr.getTimetableRow(this, destinationSet)));
+                    //trains.forEach(tr -> trainTable.addView(tr.getTimetableRow(this, destinationSet)));
                     header.setText(destinationSet
                             ? originField.getText().toString() + " - Leaving and arriving trains."
                             : originField.getText().toString() + " - "
@@ -247,14 +247,14 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
 
                 trainTable.removeAllViews();
                 trains.forEach(t -> {
-                    TableRow row = t.getTimetableRow(context, destination != null);
+                    //TableRow row = t.getTimetableRow(context, destination != null);
                     Button trackBtn = new Button(MainActivity.this);
                     trackBtn.setOnClickListener(v -> {
                         subscribe(t.getMQTTTopic());
                         Log.d(TAG, "Track train, topic: " + t.getMQTTTopic());
                     });
-                    row.addView(trackBtn);
-                    trainTable.addView(row);
+                    //row.addView(trackBtn);
+                    //trainTable.addView(row);
                 });
                 header.setText(destination == null
                         ? origin.getStationFriendlyName() + " - Leaving and arriving trains."
@@ -296,9 +296,8 @@ public class MainActivity extends AppCompatActivity implements MqttListener {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(TAG, "onServiceConnected()");
-            TrainMqttBinder binder = (TrainMqttBinder) service;
+            MqttBinder binder = (MqttBinder) service;
             trainMqttService = binder.getService();
-            trainMqttService.setListener(MainActivity.this);
         }
 
         @Override

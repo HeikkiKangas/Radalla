@@ -19,18 +19,58 @@
         <service android:name=".services.RailwayStationFetchService" />
         <service android:name=".services.TrainFetchService" />
         <service android:name="org.eclipse.paho.android.service.MqttService" />
-        <service android:name=".services.TrainMqttService" />
+        <service android:name=".services.MqttService" />
+        <!--
         <receiver android:name=".MainActivity$TrainReceiver" >
             <intent-filter>
                 <action android:name="xyz.dradge.radalla.TrainsFetched" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".MainActivity$RailwayStationReceiver" >
+        -->
+
+        <receiver android:name=".NewMainActivity$RailwayStationReceiver" >
             <intent-filter>
-            <action android:name="xyz.dradge.radalla.RailwayStationsFetched" />
-        </intent-filter>
+                <action android:name="xyz.dradge.radalla.RailwayStationsFetched" />
+            </intent-filter>
+        </receiver>
+
+        <!-- StationViewFragment -->
+        <receiver android:name=".tabs.station.StationViewFragment$RailwayStationUpdateReceiver" >
+            <intent-filter>
+                <action android:name="xyz.dradge.radalla.RailwayStationsUpdated" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".tabs.station.StationViewFragment$TrainReceiver" >
+            <intent-filter>
+                <action android:name="xyz.dradge.radalla.TrainsFetched" />
+            </intent-filter>
+        </receiver>
+
+        <!-- RouteViewFragment -->
+        <receiver android:name=".tabs.route.RouteViewFragment$RailwayStationUpdateReceiver" >
+            <intent-filter>
+                <action android:name="xyz.dradge.radalla.RailwayStationsUpdated" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".tabs.route.RouteViewFragment$TrainReceiver" >
+            <intent-filter>
+                <action android:name="xyz.dradge.radalla.TrainsFetched" />
+            </intent-filter>
+        </receiver>
+
+        <!-- TrainViewFragment -->
+        <receiver android:name=".tabs.train.TrainViewFragment$RailwayStationUpdateReceiver" >
+            <intent-filter>
+                <action android:name="xyz.dradge.radalla.RailwayStationsUpdated" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".tabs.train.TrainViewFragment$TrainReceiver" >
+            <intent-filter>
+                <action android:name="xyz.dradge.radalla.TrainsFetched" />
+            </intent-filter>
         </receiver>
     </application>
+
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- For Paho -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />

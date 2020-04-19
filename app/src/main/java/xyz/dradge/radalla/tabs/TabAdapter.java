@@ -5,6 +5,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
+import xyz.dradge.radalla.tabs.route.RouteViewFragment;
+import xyz.dradge.radalla.tabs.station.StationViewFragment;
+import xyz.dradge.radalla.tabs.train.TrainViewFragment;
+
 public class TabAdapter extends FragmentStateAdapter {
 
     @Override
