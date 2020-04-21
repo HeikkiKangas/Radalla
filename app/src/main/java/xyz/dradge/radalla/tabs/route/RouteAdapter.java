@@ -1,4 +1,4 @@
-package xyz.dradge.radalla.tabs.station;
+package xyz.dradge.radalla.tabs.route;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,36 +12,35 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-import xyz.dradge.radalla.MapActivity;
 import xyz.dradge.radalla.MainActivity;
+import xyz.dradge.radalla.MapActivity;
 import xyz.dradge.radalla.R;
-import xyz.dradge.radalla.model.TimeTableRow;
 import xyz.dradge.radalla.model.Train;
 
 /**
- * RecyclerView adapter for list items in station view.
+ * RecyclerView adapter for list items in route view.
  */
-public class StationAdapter extends RecyclerView.Adapter<StationAdapter.ViewHolder> {
+public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.ViewHolder> {
     private List<Train> trains;
 
     /**
      * Constructor that sets the trains to show.
      * @param trains the trains to show.
      */
-    public StationAdapter(List<Train> trains) {
+    public RouteAdapter(List<Train> trains) {
         this.trains = trains;
     }
 
     /**
-     * Inflates the ViewHolder layout for a single train on station view.
+     * Inflates the ViewHolder layout for a single train on route view.
      * @param parent used for inflating the layout.
      * @param viewType not used.
      * @return the inflated ViewHolder.
      */
     @NonNull
     @Override
-    public StationAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.station_view_item, parent, false));
+    public RouteAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.route_view_item, parent, false));
     }
 
     /**
@@ -51,21 +50,15 @@ public class StationAdapter extends RecyclerView.Adapter<StationAdapter.ViewHold
      * @param position position of the current train.
      */
     @Override
-    public void onBindViewHolder(@NonNull StationAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RouteAdapter.ViewHolder holder, int position) {
         Train t = trains.get(position);
-        TimeTableRow departureRow = t.getDepartureRow();
-        holder.departureTime.setText(departureRow == null
-                ? ""
-                : t.getOriginDepartureTime()
-        );
+        holder.departureTime.setText(t.getOriginDepartureTime());
         holder.trainName.setText(
                 t.getCommuterLineID().isEmpty()
                 ? t.getTrainType().replace("HDM", "H") + ' ' + t.getTrainNumber()
                 : t.getCommuterLineID()
         );
-
-        holder.arrivalTime.setText((t.getDestinationArrivalTime()));
-        holder.destinationName.setText(t.getDestination().getStationFriendlyName());
+        holder.arrivalTime.setText(t.getDestinationArrivalTime());
         holder.trainLocationTopic = t.getLocationMQTTTopic();
         holder.runningCurrently = t.isRunningCurrently();
     }
@@ -86,7 +79,6 @@ public class StationAdapter extends RecyclerView.Adapter<StationAdapter.ViewHold
         public TextView departureTime;
         public TextView trainName;
         public TextView arrivalTime;
-        public TextView destinationName;
         public String trainLocationTopic;
         public boolean runningCurrently;
 
@@ -96,10 +88,9 @@ public class StationAdapter extends RecyclerView.Adapter<StationAdapter.ViewHold
          */
         public ViewHolder(View v) {
             super(v);
-            departureTime = v.findViewById(R.id.stationItemDepartureTime);
-            trainName = v.findViewById(R.id.stationItemTrainName);
-            arrivalTime = v.findViewById(R.id.stationItemArrivalTime);
-            destinationName = v.findViewById(R.id.stationItemDestinationName);
+            departureTime = v.findViewById(R.id.routeItemDepartureTime);
+            trainName = v.findViewById(R.id.routeItemTrainName);
+            arrivalTime = v.findViewById(R.id.routeItemArrivalTime);
             v.setOnLongClickListener(this);
         }
 

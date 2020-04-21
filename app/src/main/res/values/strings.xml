@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Radalla</string>
+    <string name="mapbox_access_token">pk.eyJ1IjoiZHJhZGdlIiwiYSI6ImNrNndhcGUyejA5cnQzZW1vMTB4cXFuMHUifQ.kdPDrFSHnvDDH2Hne03wMg</string>
 </resources>

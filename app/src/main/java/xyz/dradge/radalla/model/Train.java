@@ -1,20 +1,19 @@
 package xyz.dradge.radalla.model;
 
-import android.content.Context;
-import android.widget.TableRow;
-import android.widget.TextView;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import xyz.dradge.radalla.util.TimeUtil;
+import xyz.dradge.radalla.util.Util;
 
+/**
+ * This class matches API's Train objects.
+ * Used for Jackson JSON parsing.
+ */
 public class Train {
     private int trainNumber;
     private String departureDate;
@@ -25,12 +24,20 @@ public class Train {
     private String trainCategory;
     private String commuterLineID;
     private boolean passengerTrain;
+    private boolean runningCurrently;
     private TimeTableRow arrivalRow;
     private TimeTableRow departureRow;
     private RailwayStation origin;
     private RailwayStation destination;
     private Map<String, RailwayStation> stations;
 
+    /**
+     * Sets the origin and destination stations also updates
+     * origin departure- and destination arrival times.
+     * @param origin Origin station.
+     * @param destination Destination station.
+     * @param stations List of all stations.
+     */
     public void setStations(RailwayStation origin, RailwayStation destination, Map<String, RailwayStation> stations) {
         this.origin = origin;
         this.stations = stations;
@@ -39,8 +46,11 @@ public class Train {
         updateArrivalAndDepartureRows();
     }
 
+    /**
+     * Updates destination arrival and origin departure timetable rows.
+     */
     private void updateArrivalAndDepartureRows() {
-        arrivalRow = getArrivalTimeTableRow(this.destination);
+        arrivalRow = getArrivalTimeTableRow(destination);
         departureRow = getDepartureTimeTableRow(origin);
     }
 
@@ -96,6 +106,11 @@ public class Train {
         return trainCategory;
     }
 
+    /**
+     * Setter for trainCategory, also sets passengerTrain
+     * boolean depending on train category.
+     * @param trainCategory
+     */
     public void setTrainCategory(String trainCategory) {
         this.trainCategory = trainCategory;
         passengerTrain = trainCategory.equals("Commuter") || trainCategory.equals("Long-distance");
@@ -121,6 +136,14 @@ public class Train {
         return passengerTrain;
     }
 
+    public boolean isRunningCurrently() {
+        return runningCurrently;
+    }
+
+    public void setRunningCurrently(boolean runningCurrently) {
+        this.runningCurrently = runningCurrently;
+    }
+
     @Override
     public String toString() {
         return "Train{" +
@@ -130,6 +153,11 @@ public class Train {
                 '}';
     }
 
+    /**
+     * Getter for departure timetable row of given station.
+     * @param station The station which timetable row will be returned if available.
+     * @return Departure timetable row of given station.
+     */
     public TimeTableRow getDepartureTimeTableRow(RailwayStation station) {
         for (TimeTableRow r : timeTableRows) {
             if (station.getStationUICCode() == r.getStationUICCode() && r.getType().equals("DEPARTURE")) return r;
@@ -137,6 +165,11 @@ public class Train {
         return null;
     }
 
+    /**
+     * Getter for arrival timetable row for given station.
+     * @param station The station which timetable row will be returned if available.
+     * @return Arrival timetable row of given station.
+     */
     public TimeTableRow getArrivalTimeTableRow(RailwayStation station) {
         for (TimeTableRow r : timeTableRows) {
             if (station.getStationUICCode() == r.getStationUICCode() && r.getType().equals("ARRIVAL")) return r;
@@ -144,8 +177,44 @@ public class Train {
         return null;
     }
 
+    /**
+     * Adds right facing arrow between two given Strings.
+     * @param time1 String number one.
+     * @param time2 String number two.
+     * @return Single String with arrow between two given Strings.
+     */
     private String getTimeChangedText(String time1, String time2) {
         return time1 + " ➜ " + time2;
+    }
+
+    /**
+     * Getter for origin departure time.
+     * @return Scheduled departure time and actual/estimated departure time if available.
+     */
+    public String getOriginDepartureTime() {
+        String scheduledTime = Util.utcToHoursAndMinutes(departureRow.getScheduledTime());
+        String updatedTime = departureRow.getUpdatedTime();
+        if (!updatedTime.equals("")) updatedTime = Util.utcToHoursAndMinutes(updatedTime);
+        if (!scheduledTime.equals(updatedTime) &&
+                !updatedTime.isEmpty()) {
+            return getTimeChangedText(scheduledTime, updatedTime);
+        }
+        return scheduledTime;
+    }
+
+    /**
+     * Getter for destination arrival time.
+     * @return Scheduled arrival time and actual/estimated arrival time if available.
+     */
+    public String getDestinationArrivalTime() {
+        String scheduledTime = Util.utcToHoursAndMinutes(arrivalRow.getScheduledTime());
+        String updatedTime = arrivalRow.getUpdatedTime();
+        if (!updatedTime.equals("")) updatedTime = Util.utcToHoursAndMinutes(updatedTime);
+        if (!scheduledTime.equals(updatedTime) &&
+                !updatedTime.isEmpty()) {
+            return getTimeChangedText(scheduledTime, updatedTime);
+        }
+        return scheduledTime;
     }
 
     public String getCommuterLineID() {
@@ -156,6 +225,10 @@ public class Train {
         this.commuterLineID = commuterLineID;
     }
 
+    /**
+     * Getter for last station of the train.
+     * @return the last station.
+     */
     private RailwayStation getLastStop() {
         for (int i = timeTableRows.size() - 1; i > 0; i--) {
             TimeTableRow row = timeTableRows.get(i);
@@ -164,6 +237,11 @@ public class Train {
         return null;
     }
 
+    /**
+     * Updates train's data to match given JSON String.
+     * @param json JSON String of updated train.
+     * @return the updated train.
+     */
     public Train updateTrain(String json) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -177,6 +255,10 @@ public class Train {
         return this;
     }
 
+    /**
+     * Getter for MQTT topic to track changes to this train.
+     * @return MQTT topic.
+     */
     public String getMQTTTopic() {
         return String.format(
                 "trains/%s/%d/#",
@@ -184,6 +266,10 @@ public class Train {
                 trainNumber);
     }
 
+    /**
+     * Getter for MQTT topic to track location changes to this train.
+     * @return MQTT topic.
+     */
     public String getLocationMQTTTopic() {
         return String.format(
                 "train-locations/%s/%d",

@@ -9,8 +9,11 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.util.Optional;
 
-import xyz.dradge.radalla.util.JsonFetchUtil;
+import xyz.dradge.radalla.util.Util;
 
+/**
+ * Service that fetches list of all trains for given station or route.
+ */
 public class TrainFetchService extends IntentService {
     private final String BASE_URL = "https://rata.digitraffic.fi/api/v1/live-trains/station/";
 
@@ -18,6 +21,10 @@ public class TrainFetchService extends IntentService {
         super("TrainFetchService");
     }
 
+    /**
+     * Fetches list of trains for given station or route.
+     * @param intent contains station short codes for origin station and destination station.
+     */
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
         Bundle extras = intent.getExtras();
@@ -32,7 +39,7 @@ public class TrainFetchService extends IntentService {
                 url = BASE_URL + originShortCode + '/' + destinationShortCode;
             }
 
-            Optional<String> json = JsonFetchUtil.fetchJSONString(url);
+            Optional<String> json = Util.fetchJSONString(url);
             if (json.isPresent()) {
                 Intent i = new Intent("xyz.dradge.radalla.TrainsFetched");
                 i.putExtra("json", json.get());

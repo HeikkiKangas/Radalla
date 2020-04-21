@@ -6,301 +6,201 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import xyz.dradge.radalla.model.RailwayStation;
-import xyz.dradge.radalla.model.Train;
-import xyz.dradge.radalla.services.MqttListener;
+import xyz.dradge.radalla.services.MqttBinder;
 import xyz.dradge.radalla.services.MqttService;
 import xyz.dradge.radalla.services.RailwayStationFetchService;
-import xyz.dradge.radalla.services.TrainFetchService;
-import xyz.dradge.radalla.services.MqttBinder;
+import xyz.dradge.radalla.tabs.TabAdapter;
 
-public class MainActivity extends AppCompatActivity implements MqttListener {
+/**
+ * The main activity, contains ViewPager for the tabs and
+ * provides a list of available railway stations to fragments.
+ */
+public class MainActivity extends AppCompatActivity {
     private final String TAG = getClass().getName();
+    private final List<String> TAB_NAMES = Arrays.asList("Station", "Route", "Settings");
+    private static ObjectMapper objectMapper;
+    private static Map<String, RailwayStation> railwayStations;
+    private static Map<String, String> stationShortCodes;
+    private static List<String> stationNames;
+    private static MainActivity mainActivity;
+    private MqttService mqttService;
+    private MqttConnection mqttConnection;
 
-    private AutoCompleteTextView originField;
-    private AutoCompleteTextView destinationField;
-    private TableLayout trainTable;
-    private TextView header;
-    private HashMap<String, RailwayStation> stations;
-    private HashMap<String, String> shortCodesToNames;
-    private ArrayList<String> passengerStationNames;
-    private ObjectMapper objectMapper;
-    private ArrayAdapter<String> autoCompleteAdapter;
-    private List<Train> trains;
-    private List<Train> trackedTrains;
-
-    private TrainMqttConnection trainMqttConnection;
-    private MqttService trainMqttService;
-
-    private String id;
-
+    /**
+     * Sets up the tabs, fetches list of railway stations and connects to MQTT service.
+     * @param savedInstanceState saved state.
+     */
     @Override
-    protected void onStart() {
-        Log.d(TAG, "onStart()");
-        if (trainMqttService == null) {
-            Intent i = new Intent(getApplicationContext(), MqttService.class);
-            i.putExtra("id", id);
-            getApplicationContext().bindService(i, trainMqttConnection, Context.BIND_AUTO_CREATE);
-        }
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        unbindService(trainMqttConnection);
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate()");
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mainActivity = this;
         setContentView(R.layout.activity_main);
-        id = UUID.randomUUID().toString();
-        trainMqttConnection = new TrainMqttConnection();
-
-        trackedTrains = new ArrayList<>();
-        passengerStationNames = new ArrayList<>();
-        stations = new HashMap<>();
-        shortCodesToNames = new HashMap<>();
-        trains = new ArrayList<>();
-
-        autoCompleteAdapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                passengerStationNames
-        );
-        /*
-        originField = findViewById(R.id.originField);
-        originField.setAdapter(autoCompleteAdapter);
-        originField.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                search(v);
-                return true;
-            }
-            return false;
-        });
-        destinationField = findViewById(R.id.destinationField);
-        destinationField.setAdapter(autoCompleteAdapter);
-        destinationField.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                search(v);
-                return true;
-            }
-            return false;
-        });
-        trainTable = findViewById(R.id.trainTable);
-        header = findViewById(R.id.header);
-        */
-        TabLayout layout = findViewById(R.id.tabLayout);
-        List<String> tabNames = Arrays.asList("Station", "Route", "Train");
+        TabAdapter tabAdapter = new TabAdapter(this);
         ViewPager2 viewPager = findViewById(R.id.viewPager);
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                super.onPageScrolled(position, positionOffset, positionOffsetPixels);
-            }
+        viewPager.setAdapter(tabAdapter);
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
 
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-            }
+        new TabLayoutMediator(
+                tabLayout,
+                viewPager,
+                (tab, position) -> tab.setText(TAB_NAMES.get(position))
+        ).attach();
 
-            @Override
-            public void onPageScrollStateChanged(int state) {
-                super.onPageScrollStateChanged(state);
-            }
-        });
-        //new TabLayoutMediator(layout, findViewById(R.id.viewPager), (tab, position) -> tab.setText(tabNames[position])).attach();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        tabLayout.selectTab(tabLayout.getTabAt(
+                Integer.parseInt(sharedPreferences.getString("defaultView", "0"))
+        ));
+
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+        railwayStations = new HashMap<>();
+        stationShortCodes = new HashMap<>();
+        stationNames = new ArrayList<>();
+
         LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);
         manager.registerReceiver(
-                new TrainReceiver(),
-                new IntentFilter("xyz.dradge.radalla.TrainsFetched"));
-
-        manager.registerReceiver(
-                new RailwayStationReceiver(),
+                new MainActivity.RailwayStationReceiver(),
                 new IntentFilter("xyz.dradge.radalla.RailwayStationsFetched"));
 
         startService(new Intent(this, RailwayStationFetchService.class));
+
+        mqttConnection = new MainActivity.MqttConnection();
+        Intent i = new Intent(this, MqttService.class);
+        bindService(i, mqttConnection, Context.BIND_AUTO_CREATE);
     }
 
-    public HashMap<String, RailwayStation> getStations() {
-        return stations;
+    /**
+     * ObjectMapper, used to map JSON String to RailwayStation objects.
+     * @return the ObjectMapper.
+     */
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 
-    public void swapDirection(View v) {
-        String temp = originField.getText().toString();
-        originField.setText(destinationField.getText());
-        destinationField.setText(temp);
-        destinationField.clearFocus();
-        if (!originField.getText().toString().isEmpty()) search(v);
+    /**
+     * Getter for Map of StationShortCodes and RailwayStation objects.
+     * @return Map of StationShortCodes and RailwayStation objects.
+     */
+    public Map<String, RailwayStation> getRailwayStations() {
+        return railwayStations;
     }
 
-    public void search(View v) {
-        if (originField.getText().toString().isEmpty()) {
-            originField.requestFocus();
-            makeToast("Origin station required.");
-            return;
-        }
-        RailwayStation origin = stations.get(shortCodesToNames.get(originField.getText().toString().trim()));
-        RailwayStation destination = stations.get(shortCodesToNames.get(destinationField.getText().toString().trim()));
-        Intent i = new Intent(this, TrainFetchService.class);
-        if (origin == null) return;
-        i.putExtra("originShortCode", origin.getStationShortCode());
-        if (destination != null) i.putExtra("destinationShortCode", destination.getStationShortCode());
-        startService(i);
+    /**
+     * Getter for Map of RailwayStation names and ShortCodes.
+     * @return Map of RailwayStation names and ShortCodes.
+     */
+    public Map<String, String> getStationShortCodes() {
+        return stationShortCodes;
     }
 
-    private void makeToast(String text) {
-        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    /**
+     * Getter for list of railway station names.
+     * @return list of railway station names.
+     */
+    public List<String> getStationNames() {
+        return stationNames;
     }
 
-    private RailwayStation findStationByShortCode(String shortCode) {
-        for (RailwayStation s : stations.values()) {
-            if (s.getStationShortCode().equals(shortCode)) return s;
-        }
-        return null;
+    /**
+     * Getter for the bound MQTT Service.
+     * @return the bound MQTT Service.
+     */
+    public MqttService getMqttService() {
+        return mqttService;
     }
 
-    @Override
-    public void onUpdate(String topic, String msg) {
-        try {
-            Log.d(TAG, "onUpdate() starting.");
-            Train updatedTrain = objectMapper.readValue(msg, Train.class);
-            for (Train t : trains) {
-                if (t.getTrainNumber() == updatedTrain.getTrainNumber() &&
-                t.getDepartureDate().equals(updatedTrain.getDepartureDate())) {
-                    t.updateTrain(msg);
-                    trainTable.removeAllViews();
-                    boolean destinationSet = destinationField.getText().toString().length() > 0;
-                    //trains.forEach(tr -> trainTable.addView(tr.getTimetableRow(this, destinationSet)));
-                    header.setText(destinationSet
-                            ? originField.getText().toString() + " - Leaving and arriving trains."
-                            : originField.getText().toString() + " - "
-                              + destinationField.getText().toString());
-                    Log.d(TAG, "onUpdate() train updated: " + t.getTrainNumber());
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public String getListenerId() {
-        return id;
-    }
-
-    public void subscribe(String topic) {
-        if (trainMqttService != null) trainMqttService.subscribe(topic, this);
-    }
-
-    public class TrainReceiver extends BroadcastReceiver {
+    /**
+     * Receiver for updates of RailwayStation objects.
+     */
+    public static class RailwayStationReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            //Log.d(getClass().getName(), "onReceive() RailwayStations received");
             String json = intent.getStringExtra("json");
-            RailwayStation origin = findStationByShortCode(intent.getStringExtra("originShortCode"));
-            RailwayStation destination = findStationByShortCode(intent.getStringExtra("destinationShortCode"));
-            Log.d(TAG, "route: " + (destination != null));
-            if (json.length() < 1) return;
-
+            if (json == null || json.isEmpty()) return;
             try {
-                trains.clear();
-                trains.addAll(
-                        Arrays.asList(objectMapper.readValue(json, Train[].class))
-                                .stream()
-                                .filter(t -> t.isPassengerTrain())
-                                .collect(Collectors.toList())
-                );
-                trains.forEach(t -> t.setStations(origin, destination, stations));
-
-                trainTable.removeAllViews();
-                trains.forEach(t -> {
-                    //TableRow row = t.getTimetableRow(context, destination != null);
-                    Button trackBtn = new Button(MainActivity.this);
-                    trackBtn.setOnClickListener(v -> {
-                        subscribe(t.getMQTTTopic());
-                        Log.d(TAG, "Track train, topic: " + t.getMQTTTopic());
-                    });
-                    //row.addView(trackBtn);
-                    //trainTable.addView(row);
-                });
-                header.setText(destination == null
-                        ? origin.getStationFriendlyName() + " - Leaving and arriving trains."
-                        : origin.getStationFriendlyName() + " - " + destination.getStationFriendlyName());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public class RailwayStationReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive() RailwayStations received");
-            String json = intent.getStringExtra("json");
-            if (json.length() < 1) return;
-            try {
+                railwayStations.clear();
+                stationShortCodes.clear();
+                stationNames.clear();
                 Arrays.asList(objectMapper.readValue(json, RailwayStation[].class))
-                    .stream()
-                    .forEach(s -> stations.put(s.getStationShortCode(), s));
-                stations.values()
                         .stream()
-                        .forEach(s -> shortCodesToNames.put(s.getStationFriendlyName(), s.getStationShortCode()));
-                passengerStationNames.clear();
-                passengerStationNames.addAll(stations.values()
-                        .stream()
-                        .filter(s -> s.isPassengerTraffic())
-                        .map(s -> s.getStationFriendlyName())
-                        .collect(Collectors.toList())
-                );
-                autoCompleteAdapter.notifyDataSetChanged();
+                        .filter(s -> s.isPassengerTraffic() && s.getCountryCode().equals("FI"))
+                        .forEach(s -> {
+                            railwayStations.put(s.getStationShortCode(), s);
+                            stationShortCodes.put(
+                                    s.getStationFriendlyName(),
+                                    s.getStationShortCode());
+                        });
+                stationNames.addAll(stationShortCodes.keySet());
+                Collections.sort(stationNames);
+                Intent i = new Intent("xyz.dradge.radalla.RailwayStationsUpdated");
+                LocalBroadcastManager.getInstance(mainActivity).sendBroadcast(i);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    class TrainMqttConnection implements ServiceConnection {
+    /**
+     * Service connection for retrieving reference to the MQTT Service.
+     */
+    class MqttConnection implements ServiceConnection {
+        /**
+         * Retrieves reference to the MQTT Service from the binder.
+         * @param name not used.
+         * @param service the Binder.
+         */
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.d(TAG, "onServiceConnected()");
+            //Log.d(TAG, "onServiceConnected()");
             MqttBinder binder = (MqttBinder) service;
-            trainMqttService = binder.getService();
+            mqttService = binder.getService();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {}
+    }
+
+    /**
+     * Unbinds the MQTT Service.
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mqttConnection);
+    }
+
+    /**
+     * Creates toast with given text.
+     * @param text the text to show.
+     */
+    public void makeToast(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
     }
 }

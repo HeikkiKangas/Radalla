@@ -2,11 +2,16 @@ package xyz.dradge.radalla.model;
 
 import java.util.List;
 
+/**
+ * This class matches API's Train location objects.
+ * Used for Jackson JSON parsing.
+ */
 public class TrainLocation {
     private int trainNumber;
     private String departureDate;
-    private String timeStamp;
+    private String timestamp;
     private Location location;
+    private int speed;
 
     public int getTrainNumber() {
         return trainNumber;
@@ -24,12 +29,12 @@ public class TrainLocation {
         this.departureDate = departureDate;
     }
 
-    public String getTimeStamp() {
-        return timeStamp;
+    public String getTimestamp() {
+        return timestamp;
     }
 
-    public void setTimeStamp(String timeStamp) {
-        this.timeStamp = timeStamp;
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 
     public Location getLocation() {
@@ -40,10 +45,20 @@ public class TrainLocation {
         this.location = location;
     }
 
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
+
+    /**
+     * Simplified version of GeoJSON used by digitraffic API for train locations.
+     */
     public class Location {
         private String type;
         private List<Double> coordinates;
-        private int speed;
 
         public String getType() {
             return type;
@@ -61,12 +76,25 @@ public class TrainLocation {
             this.coordinates = coordinates;
         }
 
-        public int getSpeed() {
-            return speed;
-        }
 
-        public void setSpeed(int speed) {
-            this.speed = speed;
+
+        @Override
+        public String toString() {
+            return "Location{" +
+                    "type='" + type + '\'' +
+                    ", coordinates=" + coordinates +
+                    '}';
         }
+    }
+
+    @Override
+    public String toString() {
+        return "TrainLocation{" +
+                "trainNumber=" + trainNumber +
+                ", departureDate='" + departureDate + '\'' +
+                ", timestamp='" + timestamp + '\'' +
+                ", location=" + location.toString() +
+                ", speed=" + speed +
+                '}';
     }
 }

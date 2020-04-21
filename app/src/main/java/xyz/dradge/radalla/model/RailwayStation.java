@@ -2,13 +2,17 @@ package xyz.dradge.radalla.model;
 
 import java.util.Objects;
 
+/**
+ * This class matches API's RailwayStation objects.
+ * Used for Jackson JSON parsing.
+ */
 public class RailwayStation {
-
     private boolean passengerTraffic;
     private String type;
     private String stationName;
     private String stationFriendlyName;
     private String stationShortCode;
+    private String countryCode;
     private int stationUICCode;
 
     public boolean isPassengerTraffic() {
@@ -32,8 +36,7 @@ public class RailwayStation {
     }
 
     public void setStationName(String stationName) {
-        if (stationName.contains(" asema")) setStationFriendlyName(stationName.replace(" asema", ""));
-        else setStationFriendlyName(stationName);
+        setStationFriendlyName(stationName.replace(" asema", ""));
         this.stationName = stationName;
     }
 
@@ -59,6 +62,14 @@ public class RailwayStation {
 
     public void setStationUICCode(int stationUICCode) {
         this.stationUICCode = stationUICCode;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
     }
 
     @Override

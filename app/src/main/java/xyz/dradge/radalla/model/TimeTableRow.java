@@ -1,5 +1,9 @@
 package xyz.dradge.radalla.model;
 
+/**
+ * This class matches API's TimetableRow objects.
+ * Used for Jackson JSON parsing.
+ */
 public class TimeTableRow {
     private String stationShortCode;
     private int stationUICCode;
@@ -12,6 +16,10 @@ public class TimeTableRow {
     private int differenceInMinutes;
     private int commercialTrack;
 
+    /**
+     * Returns actual or estimated departure/arrival time if available.
+     * @return actual or estimated time if available, otherwise empty String.
+     */
     public String getUpdatedTime() {
         if (actualTime != null) return actualTime;
         else if (liveEstimateTime != null) return liveEstimateTime;

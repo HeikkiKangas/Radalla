@@ -9,26 +9,21 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".NewMainActivity">
+
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".MapActivity" />
+
         <service android:name=".services.RailwayStationFetchService" />
         <service android:name=".services.TrainFetchService" />
-        <service android:name="org.eclipse.paho.android.service.MqttService" />
         <service android:name=".services.MqttService" />
-        <!--
-        <receiver android:name=".MainActivity$TrainReceiver" >
-            <intent-filter>
-                <action android:name="xyz.dradge.radalla.TrainsFetched" />
-            </intent-filter>
-        </receiver>
-        -->
+        <service android:name="org.eclipse.paho.android.service.MqttService" />
 
-        <receiver android:name=".NewMainActivity$RailwayStationReceiver" >
+        <receiver android:name=".MainActivity$RailwayStationReceiver" >
             <intent-filter>
                 <action android:name="xyz.dradge.radalla.RailwayStationsFetched" />
             </intent-filter>
@@ -57,22 +52,10 @@
                 <action android:name="xyz.dradge.radalla.TrainsFetched" />
             </intent-filter>
         </receiver>
-
-        <!-- TrainViewFragment -->
-        <receiver android:name=".tabs.train.TrainViewFragment$RailwayStationUpdateReceiver" >
-            <intent-filter>
-                <action android:name="xyz.dradge.radalla.RailwayStationsUpdated" />
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".tabs.train.TrainViewFragment$TrainReceiver" >
-            <intent-filter>
-                <action android:name="xyz.dradge.radalla.TrainsFetched" />
-            </intent-filter>
-        </receiver>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- For Paho -->
+    <!-- For PahoMQTT -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
